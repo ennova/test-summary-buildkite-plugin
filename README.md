@@ -152,7 +152,11 @@ Other formatter options are:
 * `fail_on_error:` Whether the command should return non-zero exit status on failure. Defaults to `false` so failing
   to annotate a build does not cause the entire pipeline to fail.
 * `run_without_docker:` Set the enviroment to run without docker. Defaults to `false`.
-  
+* `image:` Optional full Docker image reference, including a tag or digest.
+  When set, this exact image is pulled and run regardless of the plugin's Git tag, including for forked or untagged revisions.
+  When unset or empty, tagged revisions pull `bugcrowd/test-summary-buildkite-plugin:<plugin-version>` from Docker Hub,
+  and untagged revisions build the image locally. Ignored when `run_without_docker` is `true`.
+
 ## Truncation
 
 Buildkite has a maximum annotation size of 100 kilobytes. If there are too many failures to fit within this limit, the

@@ -21,16 +21,22 @@ if [[ ${BUILDKITE_PLUGIN_TEST_SUMMARY_RUN_WITHOUT_DOCKER:-false} = true ]]; then
     ./bin/setup
     ./bin/run
 else
-    TAG=$(git describe --tags --exact-match 2> /dev/null || true)
-
-    if [[ -n "$TAG" ]]; then
-        echo "Found tag $TAG, pulling from docker hub"
-        IMAGE="$DOCKER_REPO:$TAG"
+    IMAGE="${BUILDKITE_PLUGIN_TEST_SUMMARY_IMAGE:-}"
+    if [[ -n "$IMAGE" ]]; then
+        echo "Pulling configured image $IMAGE"
         docker pull "$IMAGE"
     else
-        echo "No tag found, building image locally"
-        IMAGE=test-summary:$BUILDKITE_JOB_ID
-        docker build -t "$IMAGE" .
+        TAG=$(git describe --tags --exact-match 2> /dev/null || true)
+
+        if [[ -n "$TAG" ]]; then
+            IMAGE="$DOCKER_REPO:$TAG"
+            echo "Found tag $TAG, pulling $IMAGE"
+            docker pull "$IMAGE"
+        else
+            echo "No tag found, building image locally"
+            IMAGE=test-summary:$BUILDKITE_JOB_ID
+            docker build -t "$IMAGE" .
+        fi
     fi
 
     docker run --rm \
@@ -39,5 +45,5 @@ else
       -e BUILDKITE_BUILD_ID -e BUILDKITE_JOB_ID -e BUILDKITE_PLUGINS \
       -e BUILDKITE_AGENT_ID -e BUILDKITE_AGENT_ACCESS_TOKEN -e BUILDKITE_AGENT_ENDPOINT   \
       -e HTTP_PROXY -e HTTPS_PROXY \
-      $IMAGE
+      "$IMAGE"
 fi
